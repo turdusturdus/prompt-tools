@@ -34,22 +34,23 @@ pipx install -e .
 
 ## Użycie
 
-### `pt get`
+### `pt context`
 
-Tworzy snapshot YAML dla podanego katalogu:
+Tworzy plik YAML z kontekstem dla podanego katalogu (lista plików + oryginalna zawartość).
+Selekcja polega na tym, które pliki zostaną znalezione (respektowane są ignory).
 
 ```bash
-pt get .
-pt get /sciezka/do/projektu
+pt context .
+pt context /sciezka/do/projektu
 ```
 
-Snapshoty są zapisywane do:
+Pliki są zapisywane do:
 
 ```
-./data/snapshots/
+./data/contexts/
 ```
 
-Nazwa pliku zaczyna się od nazwy katalogu, który snapshotujesz:
+Nazwa pliku zaczyna się od nazwy katalogu, który kontekstujesz:
 
 ```
 <dir>_YYYYMMDD_HHMM.yaml
@@ -63,10 +64,11 @@ onathoerfolder_20251110_1240.yaml
 
 ### `pt apply`
 
-Odtwarza pliki z pliku YAML (snapshot w formacie `pt get`) do wskazanego katalogu:
+Zapisuje pliki do wskazanego katalogu na podstawie pliku YAML (`files: ...`).
+Taki YAML może pochodzić z `pt context`, ale często jest generowany przez LLM jako „plan zmian”.
 
 ```bash
-pt apply . data/snapshots/myproj_20251110_1240.yaml
+pt apply . data/contexts/myproj_20251110_1240.yaml
 ```
 
 Domyślnie `YAML_FILE` to `files.yaml`, więc możesz też:
@@ -81,9 +83,9 @@ Przydatne flagi:
 - `--no-clobber` – nie nadpisuj istniejących plików.
 - `--write-placeholders` – zapisuj placeholdery (`[binary file omitted]`, itd.); domyślnie są pomijane.
 
-## Format pliku snapshot (YAML)
+## Format pliku YAML (`files`)
 
-Generowany plik to pojedynczy dokument YAML:
+Plik to pojedynczy dokument YAML:
 
 ```yaml
 files:
@@ -98,7 +100,7 @@ files:
 Uwagi:
 
 - `files` to lista wpisów.
-- `path` jest **ścieżką względną względem katalogu przekazanego do `pt get`**.
+- `path` jest **ścieżką względną względem katalogu przekazanego do `pt context`** (albo względem katalogu docelowego w `pt apply`).
 - `content` jest YAML block scalar (`|-`), więc zawartość pliku jest zachowana „as-is”.
 - Pliki binarne nie są wbudowywane w YAML — zamiast tego pojawia się:
 
@@ -108,6 +110,6 @@ Uwagi:
 
 ## Ignore rules
 
-- Jeśli katalog jest repozytorium git, `pt get` używa `git ls-files` i respektuje `.gitignore`.
+- Jeśli katalog jest repozytorium git, `pt context` używa `git ls-files` i respektuje `.gitignore`.
 - W przeciwnym wypadku spada do `rg --files` (ripgrep), które też respektuje `.gitignore`.
-- Jeśli w snapshotowanym katalogu istnieje `.ppignore`, jego wzorce są stosowane jako dodatkowe wykluczenia.
+- Jeśli w kontekstowanym katalogu istnieje `.ppignore`, jego wzorce są stosowane jako dodatkowe wykluczenia.

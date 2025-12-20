@@ -119,7 +119,7 @@ def is_binary_file(path: Path) -> bool:
         return True
 
 
-def write_yaml_snapshot(output_path: Path, project_root: Path, rel_files: List[str], patterns: List[str]) -> None:
+def write_yaml_context(output_path: Path, project_root: Path, rel_files: List[str], patterns: List[str]) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with output_path.open("w", encoding="utf-8", newline="\n") as out:
@@ -158,7 +158,7 @@ def write_yaml_snapshot(output_path: Path, project_root: Path, rel_files: List[s
                 out.write("      " + line + "\n")
 
 
-def cmd_get(args: argparse.Namespace) -> int:
+def cmd_context(args: argparse.Namespace) -> int:
     project_root = Path(args.project_dir).expanduser().resolve()
     if not project_root.is_dir():
         die(f"Error: project dir not found: {project_root}")
@@ -172,15 +172,15 @@ def cmd_get(args: argparse.Namespace) -> int:
     else:
         die("Error: Need 'git' (repo) or 'ripgrep' (rg) to honor ignores.")
 
-    # snapshots live in repo-root ./data/snapshots
-    repo_root = Path(__file__).resolve().parents[3]  # .../repo/src/pt/get/cli.py -> parents[3] == repo root
-    snapshots_dir = repo_root / "data" / "snapshots"
+    # contexts live in repo-root ./data/contexts/<project-name>/
+    repo_root = Path(__file__).resolve().parents[3]  # .../repo/src/pt/context/cli.py -> parents[3] == repo root
+    contexts_root = repo_root / "data" / "contexts"
 
     prefix = project_root.name
     now = datetime.now()
-    output_path = snapshots_dir / f"{prefix}_{now:%Y%m%d_%H%M}.yaml"
+    output_path = contexts_root / prefix / f"{prefix}_{now:%Y%m%d_%H%M}.yaml"
 
-    write_yaml_snapshot(output_path, project_root, rel_files, pp_ignore)
+    write_yaml_context(output_path, project_root, rel_files, pp_ignore)
 
     print(f"Wrote: {output_path}")
     return 0
