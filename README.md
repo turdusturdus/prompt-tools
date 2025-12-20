@@ -62,6 +62,24 @@ Przykład:
 onathoerfolder_20251110_1240.yaml
 ```
 
+### `pt tree`
+
+Tworzy plik YAML z drzewem plików (tylko te, które byłyby brane do kontekstu), bez wbudowywania treści.
+W środku jest tylko:
+
+- `tree: |-` (ASCII tree; przy plikach dopisana jest liczba linii albo `(?)` jeśli nie da się policzyć)
+
+```bash
+pt tree .
+pt tree /sciezka/do/projektu
+```
+
+Pliki są zapisywane do:
+
+```
+./data/trees/
+```
+
 ### `pt apply`
 
 Zapisuje pliki do wskazanego katalogu na podstawie pliku YAML (`files: ...`).

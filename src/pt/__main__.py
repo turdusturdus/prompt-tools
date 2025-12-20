@@ -4,6 +4,7 @@ import argparse
 
 from pt.apply.cli import cmd_apply
 from pt.context.cli import cmd_context
+from pt.tree.cli import cmd_tree
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -14,6 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
             "A small CLI for working with prompt-tools artifacts.\n"
             "Currently available commands:\n"
             "  - pt context  Create a YAML context artifact of a directory\n"
+            "  - pt tree     Create a YAML file tree artifact of a directory\n"
             "  - pt apply    Apply a YAML file set into a directory\n"
         ),
     )
@@ -47,6 +49,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory to context (paths inside the YAML are relative to this directory).",
     )
     p_context.set_defaults(func=cmd_context)
+
+    p_tree = sub.add_parser(
+        "tree",
+        help="Create a YAML file tree artifact of a directory.",
+        description=(
+            "Create a YAML file tree artifact of a directory.\n\n"
+            "This command selects the same files that `pt context` would consider\n"
+            "(respecting .gitignore and optional .ppignore), but does NOT embed file contents.\n"
+            "Instead, it writes a YAML artifact containing:\n"
+            "  • an ASCII tree (tree: |-) with optional line counts per file\n\n"
+            "Output is written into:\n"
+            "  ./data/trees/<project-name>/<project>_YYYYMMDD_HHMM.yaml\n"
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    p_tree.add_argument(
+        "project_dir",
+        metavar="PROJECT_DIR",
+        help="Directory to analyze (paths inside the YAML are relative to this directory).",
+    )
+    p_tree.set_defaults(func=cmd_tree)
 
     p_apply = sub.add_parser(
         "apply",
@@ -82,7 +105,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run",
         action="store_true",
         help="Print what would be written, without writing files.",
-    )
+        )
     p_apply.add_argument(
         "--no-clobber",
         action="store_true",

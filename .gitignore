@@ -16,3 +16,4 @@ src/*.egg-info/
 
 # --- generated data / artifacts ---
 data/
+files.yaml
