@@ -1,0 +1,18 @@
+# --- Python / venv ---
+.venv/
+venv/
+
+# --- Python bytecode ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- setuptools / editable installs ---
+src/*.egg-info/
+
+# --- pytest ---
+.pytest_cache/
+
+# --- snapshots (generated files) ---
+src/pt/get/snapshots/*.yaml
