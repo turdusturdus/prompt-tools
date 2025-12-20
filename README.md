@@ -61,6 +61,26 @@ Przykład:
 onathoerfolder_20251110_1240.yaml
 ```
 
+### `pt apply`
+
+Odtwarza pliki z pliku YAML (snapshot w formacie `pt get`) do wskazanego katalogu:
+
+```bash
+pt apply . data/snapshots/myproj_20251110_1240.yaml
+```
+
+Domyślnie `YAML_FILE` to `files.yaml`, więc możesz też:
+
+```bash
+pt apply .
+```
+
+Przydatne flagi:
+
+- `--dry-run` – pokaż co byłoby zapisane bez zapisu.
+- `--no-clobber` – nie nadpisuj istniejących plików.
+- `--write-placeholders` – zapisuj placeholdery (`[binary file omitted]`, itd.); domyślnie są pomijane.
+
 ## Format pliku snapshot (YAML)
 
 Generowany plik to pojedynczy dokument YAML:

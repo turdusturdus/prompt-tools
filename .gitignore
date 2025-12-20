@@ -16,3 +16,6 @@ src/*.egg-info/
 
 # --- snapshots (generated files) ---
 src/pt/get/snapshots/*.yaml
+
+# --- generated data / snapshots ---
+data/

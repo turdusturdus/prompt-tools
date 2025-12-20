@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 
+from pt.apply.cli import cmd_apply
 from pt.get.cli import cmd_get
 
 
@@ -12,7 +13,8 @@ def build_parser() -> argparse.ArgumentParser:
             "prompt-tools (pt)\n\n"
             "A small CLI for working with prompt-tools artifacts.\n"
             "Currently available commands:\n"
-            "  - pt get   Create a YAML snapshot of a directory\n"
+            "  - pt get    Create a YAML snapshot of a directory\n"
+            "  - pt apply  Apply a YAML snapshot into a directory\n"
         ),
     )
     sub = p.add_subparsers(dest="command", required=True)
@@ -45,6 +47,49 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory to snapshot (paths inside the YAML are relative to this directory).",
     )
     p_get.set_defaults(func=cmd_get)
+
+    p_apply = sub.add_parser(
+        "apply",
+        help="Apply a YAML snapshot into a directory.",
+        description=(
+            "Apply a YAML snapshot into PROJECT_DIR.\n\n"
+            "The command reads snapshot YAML (the same format as `pt get` produces) and writes files\n"
+            "into PROJECT_DIR, creating directories as needed.\n\n"
+            "Safety:\n"
+            "  • Absolute paths are rejected.\n"
+            "  • Path traversal ('..') is rejected.\n"
+            "  • Placeholder contents ([binary file omitted], [unreadable file omitted]) are skipped by default.\n"
+        ),
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    p_apply.add_argument(
+        "project_dir",
+        metavar="PROJECT_DIR",
+        help="Target directory to write files into.",
+    )
+    p_apply.add_argument(
+        "yaml_file",
+        metavar="YAML_FILE",
+        nargs="?",
+        default="files.yaml",
+        help="Snapshot YAML to apply (default: files.yaml).",
+    )
+    p_apply.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print what would be written, without writing files.",
+    )
+    p_apply.add_argument(
+        "--no-clobber",
+        action="store_true",
+        help="Do not overwrite existing files.",
+    )
+    p_apply.add_argument(
+        "--write-placeholders",
+        action="store_true",
+        help="Write placeholder markers for omitted binary/unreadable files.",
+    )
+    p_apply.set_defaults(func=cmd_apply)
 
     return p
 
