@@ -1,71 +1,98 @@
-### Założenia projektowania kodu o poprawności wynikającej z konstrukcji
+Correctness by Construction (CbC)
 
-Cel: Budować kod w Pythonie (Airflow, Psycopg, migracje danych), w którym poprawność najmniejszych metod wynika z ich konstrukcji, a większe operacje można tworzyć przez składanie sprawdzonych elementów, bez konieczności ponownego testowania ich wewnętrznej logiki.
+Cel
 
-### 1\. Podstawowe zasady
+Tworzyć oprogramowanie, którego poprawność można łatwo uzasadnić na podstawie jego konstrukcji, ograniczając liczbę potencjalnych błędów, złożoność analizy oraz konieczność powtarzania testów już sprawdzonych mechanizmów.
 
-1\. Atomowość odpowiedzialności (Single Responsibility) – każda metoda realizuje jedną, ściśle określoną operację.
+Podejście opiera się na trzech kategoriach.
 
-2\. Poprawność przez konstrukcję (Correctness by Construction) – kod projektujemy tak, aby określone błędy były niemożliwe dzięki zastosowanym mechanizmom, a nie wykrywane dopiero przez testy.
+I. Zasady ogólne
 
-3\. Projektowanie przez kontrakty (Design by Contract) – każda metoda ma jasno określone warunki wejściowe, wynik, gwarancje oraz założenia.
+Powszechnie uznane praktyki inżynierskie, przydatne w zasadzie każdym projekcie. Nie stanowią specyfiki naszej strategii, ale świadomie nadajemy im wysoki priorytet.
 
-4\. Eliminowanie niepoprawnych stanów (Make Illegal States Unrepresentable) – wykorzystujemy typy, walidację i ograniczone interfejsy, aby uniemożliwiać nieprawidłowe użycie metod.
+Zasada| Na co kładziemy nacisk
+Don't Reinvent the Wheel| Preferujemy istniejące, sprawdzone rozwiązania — szczególnie mechanizmy języka, biblioteki standardowej i bazy danych.
+KISS (Keep It Simple, Stupid)| Unikamy niepotrzebnej złożoności konstrukcji, implementacji i przepływu sterowania.
+Information Hiding| Oddzielamy interfejs komponentu od szczegółów jego implementacji. Ograniczamy zależności między elementami systemu.
 
-5\. Funkcje czyste (Pure Functions) – oddzielamy deterministyczną logikę transformacji od operacji na bazie danych i innych skutków ubocznych.
+Zasady te wspierają spójność kodu, jego czytelność, łatwość analizy i dalszego rozwoju.
 
-6\. Wykorzystywanie istniejących gwarancji – opieramy kod na mechanizmach PostgreSQL i Psycopg, np. transakcjach, `PRIMARY KEY`, `ON CONFLICT`, zamiast implementować je samodzielnie.
+II. Zasady specyficzne dla naszej strategii CbC
 
-7\. Idempotencja – ponowne wykonanie operacji nie powinno prowadzić do niepożądanych zmian, co ma szczególne znaczenie przy ponowieniach zadań Airflow.
+Istniejące, uznane koncepcje, których stosowanie przyjmujemy jako świadomą decyzję projektową.
 
-8\. Poprawność przez kompozycję (Compositional Reasoning) – większe operacje budujemy z mniejszych, wykorzystując ich kontrakty, bez ponownej analizy implementacji.
+Zasada| Rola w naszej strategii
+Design by Contract (DbC)| Określamy warunki wstępne, końcowe i niezmienniki operacji. Poprawność rozpatrujemy względem jawnego kontraktu.
+Make Illegal States Unrepresentable| Wykorzystujemy typy, konstrukcje danych i ograniczenia bazy, aby niepoprawne stany były niemożliwe lub trudniejsze do osiągnięcia.
+Assume–Guarantee Reasoning| Budujemy poprawne operacje z komponentów o znanych gwarancjach, upewniając się, że spełniamy ich założenia.
+Functional Core, Imperative Shell| Preferujemy oddzielenie czystej logiki od operacji posiadających efekty uboczne.
+Fail Fast| Naruszenia założeń i nieoczekiwane błędy powinny być jawne, zamiast prowadzić do dalszego wykonywania kodu w niepoprawnym stanie.
 
-### 2\. Zasady implementacyjne
+Dodatkowo stosujemy odpowiednio do charakteru operacji:
 
-Każda metoda powinna:
+- Exception Safety — zachowanie określonych gwarancji stanu w przypadku błędów.
+- Atomicity (ACID) — niepodzielność powiązanych zmian, gdy jest wymagana.
+- Idempotency — bezpieczeństwo ponownego wykonania operacji, gdy dopuszczamy ponowienia.
 
-* Mieć jedną odpowiedzialność i minimalną liczbę możliwych stanów.
+Nie są to wymagania dla każdej funkcji, lecz właściwości obowiązkowe tam, gdzie wynikają z kontraktu operacji.
 
-* Posiadać jednoznaczny kontrakt wejścia i wyjścia.
+III. Model konstrukcyjny — prymitywy
 
-* Wykorzystywać gotowe gwarancje języka, bibliotek lub bazy danych.
+1. Definicja robocza
 
-* Minimalizować rozgałęzienia, mutowalność i efekty uboczne.
+Prymityw to podstawowy element konstrukcyjny o znanym kontrakcie, którego poprawność w zakresie tego kontraktu uznajemy za dostatecznie uzasadnioną, aby wykorzystywać go bez ponownej weryfikacji jego wewnętrznej implementacji przy każdym użyciu.
 
-* Ukrywać szczegóły implementacyjne za wąskim interfejsem.
+Prymitywem może być zarówno gotowy mechanizm języka, biblioteki lub bazy danych, jak i prosty komponent naszego kodu, którego poprawność została osobno uzasadniona.
 
-* Być możliwa do przeanalizowania i zweryfikowania niezależnie.
+2. Wymagane właściwości
 
-* Nie wymagać ponownego testowania przy każdym wykorzystaniu, jeśli jej kontrakt i założenia pozostają niezmienione.
+A. Znany kontrakt
 
-### 3\. Docelowa architektura
+Prymityw ma jasno określone wejścia, wyniki, warunki użycia, możliwe błędy i istotne niezmienniki.
 
-Warstwa 3 — Orkiestracja (Airflow)
+B. Uzasadniona poprawność
 
-Uruchamianie gotowych procesów, harmonogram, retries
+Istnieje podstawa, aby ufać jego implementacji, np. dojrzały i udokumentowany mechanizm standardowej biblioteki, gwarancja silnika bazy danych albo prosta implementacja, której poprawność można bezpośrednio przeanalizować.
 
-Warstwa 2 — Zaufane prymitywy migracyjne
+C. Łatwość lokalnego rozumowania
 
-Pobieranie, walidacja, transformacja, zapis, checkpoint
+Zachowanie prymitywu jest możliwe do zrozumienia bez analizowania niepowiązanych fragmentów aplikacji. Prymityw nie powinien ukrywać niejawnych zależności ani niepotrzebnej logiki.
 
-Warstwa 1 — Gwarancje technologiczne
+D. Kontrolowane efekty uboczne
 
-Python, Psycopg, PostgreSQL, transakcje, ograniczenia SQL
+Preferujemy operacje bez efektów ubocznych, kiedy jest to możliwe.
 
-### 4\. Zasada weryfikacji
+Efekty uboczne nie dyskwalifikują jednak prymitywu. Operacje bazy danych, systemu plików czy sieci mogą być prymitywami, jeśli ich skutki, warunki i zachowanie w przypadku błędów są określone.
 
-Prymityw weryfikujemy raz, a następnie używamy go wielokrotnie na podstawie jego kontraktu.
+E. Możliwość bezpiecznej kompozycji
 
-Ponowna weryfikacja jest potrzebna, gdy zmienia się implementacja, kontrakt lub jego założenia. Nowe procesy nadal wymagają sprawdzenia poprawności kompozycji i logiki biznesowej.
+Prymityw udostępnia wystarczające gwarancje, aby można było uzasadniać poprawność większych operacji, które z niego korzystają.
 
-### 5\. Najważniejsza idea
+3. Zasada budowania
 
-Nie chodzi o pisanie jak najkrótszych metod.
+Preferujemy konstruowanie nowego kodu z już uzasadnionych elementów.
 
-Chodzi o minimalizowanie liczby możliwych stanów, ścieżek wykonania i założeń, które trzeba analizować, aby uzasadnić poprawność.
+Nowy komponent może zostać uznany za prymityw, jeżeli jego poprawność da się ustalić na podstawie gwarancji użytych elementów oraz prostej, przejrzystej kompozycji.
 
-Ostateczna zasada brzmi:
+Nie zakładamy jednak, że każda kompozycja poprawnych elementów automatycznie jest poprawna. Musimy uwzględnić warunki ich połączenia.
 
-> Projektuj najmniejsze elementy tak, aby ich poprawność wynikała z konstrukcji. Następnie buduj większe elementy wyłącznie z operacji o znanych kontraktach, przenosząc uzasadnienie poprawności z poziomu implementacji na poziom kompozycji.
+4. Zasada testowania
 
-To podejście można określić jako Correctness by Construction + Design by Contract + Compositional Reasoning, realizowane poprzez własną warstwę zaufanych prymitywów programistycznych.
+Nie powtarzamy testowania wewnętrznego działania mechanizmów, których gwarancje zostały już wiarygodnie ustalone.
+
+Skupiamy testy i weryfikację na:
+
+- nowej logice, której poprawność nie jest jeszcze dostatecznie uzasadniona;
+- granicach między komponentami;
+- poprawności ich połączenia;
+- zachowaniu wobec błędów, efektów ubocznych i warunków środowiskowych.
+
+Celem jest ograniczenie liczby potrzebnych testów dzięki konstrukcji, a nie rezygnacja z testów bez uzasadnienia.
+
+Relacja między kategoriami
+
+Zasady ogólne ograniczają niepotrzebną złożoność i sprzyjają wykorzystaniu sprawdzonych mechanizmów.
+
+Zasady CbC pozwalają określać kontrakty, unikać niepoprawnych stanów i uzasadniać poprawność kompozycji.
+
+Model konstrukcyjny wykorzystuje oba poprzednie poziomy, aby budować oprogramowanie z elementów o znanych, wiarygodnych gwarancjach.
